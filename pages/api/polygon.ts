@@ -6,7 +6,6 @@ export default async function handler(req, res) {
       message: "Wallet address undefined",
     });
   }
-  let tokenBalance: number = 0;
   let hasUsedFaucet: boolean = false;
   let hasSwappedTokens: boolean = false;
   let hasVotedInPoll: boolean = false;
@@ -15,33 +14,6 @@ export default async function handler(req, res) {
   let hasBurnedTokens: boolean = false;
   let hasMintedNFT: boolean = false;
   const delay = (ms = 300) => new Promise((r) => setTimeout(r, ms));
-
-  const responseTokenBalance = await fetch(
-    "https://api.polygonscan.com/api?module=account&action=tokenbalance&contractaddress=0x4a14ac36667b574b08443a15093e417db909d7a3&address=" +
-      req.query.wallet_address +
-      "&tag=latest&apikey=" +
-      process.env.POLYGON_API_KEY
-  );
-  const balanceJson = await responseTokenBalance.json();
-  await delay();
-
-  if (
-    balanceJson.status === "0" &&
-    balanceJson.result.includes("Invalid address")
-  ) {
-    return res.status(400).json({
-      message: "Wallet address invalid",
-    });
-  }
-
-  if (balanceJson.status === "0") {
-    return res.status(500).json({
-      message: balanceJson.message,
-      result: balanceJson.result,
-    });
-  }
-
-  tokenBalance = balanceJson.result;
 
   const response = await fetch(
     "https://api.polygonscan.com/api?module=account&action=txlist&address=" +
@@ -145,7 +117,6 @@ export default async function handler(req, res) {
   }
 
   res.status(200).json({
-    tokenBalance: tokenBalance,
     hasUsedFaucet: hasUsedFaucet,
     hasSentTokens: hasSentTokens,
     hasMintedNFT: hasMintedNFT,

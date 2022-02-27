@@ -6,6 +6,7 @@ import GameFinish from "../components/GameFinish";
 import useEagerConnect from "../hooks/useEagerConnect";
 import { parseBalanceToNum } from "../util";
 import { useRouter } from "next/router";
+import useTokenBalance from "../hooks/useTokenBalance";
 import { UserRejectedRequestError } from "@web3-react/injected-connector";
 import React, { useEffect, useState } from "react";
 import { injected } from "../connectors";
@@ -189,19 +190,21 @@ export default function Home() {
 
   const isConnected = typeof account === "string" && !!library;
 
+  const walletAddress = query.wallet ? query.wallet : account;
+
   const { data: polygonData, error } = useSwr(
-    `/api/polygon?wallet_address=${query.wallet ? query.wallet : account}`,
+    `/api/polygon?wallet_address=${walletAddress}`,
     fetcher,
     { revalidateOnFocus: false }
   );
+
+  const balance = useTokenBalance(walletAddress);
 
   const [activeDot, setActiveDot] = useState(-1);
 
   let gameTileCompletionStates = [
     isConnected || query.wallet ? 1 : 0,
-    parseBalanceToNum((polygonData && polygonData["tokenBalance"]) ?? 0) >= 100
-      ? 1
-      : 0,
+    parseBalanceToNum(balance ?? 0) >= 100 ? 1 : 0,
     polygonData && polygonData["hasUsedFaucet"] ? 1 : 0,
     polygonData && polygonData["hasSentTokens"] ? 1 : 0,
     polygonData && polygonData["hasMintedNFT"] ? 1 : 0,
@@ -253,10 +256,7 @@ export default function Home() {
           )}
 
         {isConnected || query.wallet ? (
-          <TokenBalance
-            balance={polygonData && polygonData["tokenBalance"]}
-            symbol="FWEB3"
-          />
+          <TokenBalance balance={balance} symbol="FWEB3" />
         ) : (
           <div>0 FWEB3</div>
         )}
